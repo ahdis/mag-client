@@ -1,23 +1,4 @@
-# matchbox-ng angular frontend to matchbox
-
-see latest [test release](https://test.ahdis.ch/matchbox/#/)
-
-angular web applications which uses fhir for:
-
-- displaying Questionnaires (R4 with first SDC extension support)
-- Validation of FHIR resources
-
-built with:
-
-- using [fhir-kit-client](https://github.com/Vermonster/fhir-kit-client) for accessing a fhir server
-- integrated [fhirpath.js](https://github.com/lhncbc/fhirpath.js/)
-- using [angular material](https://material.angular.io/) for UI components
-
-Note:
-Chrome on OSX has a CORS Problem and cannot execute te $extract operation, this happens only to a http url, but not to a https url
-
-- Response to preflight request doesn't pass access control check: Redirect is not allowed for a preflight request.
-- Looks like this could happen: For those struggling with this in the future, the problem was that the URL was returning a 302-Redirect, and even though the new location was presenting CORS headers with 200-OK, the initial 302 response was not.
+# cleint frontend to mag
 
 # development setup
 
@@ -51,9 +32,9 @@ Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.
 this angular app is directly provided with matchbox
 
 ```
-ng build --configuration production --base-href /matchbox/
-rm -rf ../matchbox/src/main/resources/static/*
-cp -r dist/* ../matchbox/src/main/resources/static
+ng build --configuration production
+rm -rf ../MobileAccessGateway/src/main/resources/static/*
+cp -r dist/* ../MobileAccessGateway/src/main/resources/static
 ```
 
 ## Contributing

@@ -15,7 +15,7 @@ export class CapabilityStatementComponent implements OnInit {
   client: FhirClient;
 
   constructor(private data: FhirConfigService) {
-    this.client = data.getFhirClient();
+    this.client = data.getMobileAccessGatewayClient();
     this.client
       .capabilityStatement()
       .then((data: fhir.r4.CapabilityStatement) => {

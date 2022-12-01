@@ -15,29 +15,13 @@ export class AppComponent {
     translateService.setDefaultLang('de');
     translateService.use(translateService.getBrowserLang());
 
-    let base = location.origin;
-    if (base === 'https://ahdis.github.io') {
-      console.log(
-        'note: using ahdis test systems for matchbox and mag' + location.origin
-      );
-      fhirConfigService.changeFhirMicroService(
-        'https://test.ahdis.ch/matchbox/fhir'
-      );
-      fhirConfigService.changeMagMicroService(
-        'https://test.ahdis.ch/mag-pmp/fhir'
-      );
+    let base = location.href;
+    if (base.indexOf('#') > 0) {
+      base = base.substring(0, base.indexOf('#') - 1) + '/fhir';
+    } else {
+      base = base + 'fhir';
     }
-    // else if (base === 'http://localhost:4200') {
-    //   console.log('note: using local dev mag system for' + location.origin);
-    //   fhirConfigService.changeFhirMicroService(
-    //     'http://localhost:8080/matchbox/fhir'
-    //   );
-    //   fhirConfigService.changeMagMicroService(
-    //     'http://localhost:8080/matchbox/fhir'
-    //   );
-    // }
-    else {
-      console.log('running at ' + location.origin);
-    }
+    console.log('note: using fhir base' + base);
+    fhirConfigService.changeMagMicroService(base);
   }
 }

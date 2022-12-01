@@ -259,15 +259,6 @@
         Medication Card
       </button>
     </mat-card-actions>
-
-    <ng-container *ngIf="canTransformToFhir()">
-      <mat-card-actions>
-        <button mat-raised-button type="submit" (click)="onTransformToFhir()">
-          Transform To FHIR
-        </button>
-        <button mat-raised-button type="submit" (click)="onPdf()">Pdf</button>
-      </mat-card-actions>
-    </ng-container>
   </mat-card-content>
 </mat-card>
 
@@ -356,12 +347,6 @@
         >
           Assign Mobile Access Patient</button
         >&nbsp;
-
-        <ng-container *ngIf="canTransformToCda()">
-          <button mat-raised-button type="submit" (click)="onTransformToCda()">
-            Transform To CDA</button
-          >&nbsp;
-        </ng-container>
 
         <button
           mat-raised-button

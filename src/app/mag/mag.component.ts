@@ -6,13 +6,27 @@ import { FhirPathService } from '../fhirpath.service';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { v4 as uuidv4 } from 'uuid';
 import { Base64 } from 'js-base64';
-import { toLocaleDateTime } from '../questionnaire-item/store/util';
 import { MatTableDataSource } from '@angular/material/table';
 import { AuthConfig, OAuthErrorEvent, OAuthService } from 'angular-oauth2-oidc';
 import { Router } from '@angular/router';
 import { getTokenSourceMapRange } from 'typescript';
 import { IDroppedBlob } from '../upload/upload.component';
 import { FhirResource } from 'fhir-kit-client';
+
+// adapted from https://stackoverflow.com/a/17415677/16231610
+const pad = (num: number) => String(Math.floor(Math.abs(num))).padStart(2, '0');
+export const toLocaleDate = (date: Date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+export const toLocaleHHMM = (date: Date) =>
+  `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+export const toLocaleTime = (date: Date) =>
+  `${toLocaleHHMM(date)}:${pad(date.getSeconds())}`;
+export function toLocaleDateTime(date: Date) {
+  const timeZoneOffset = -date.getTimezoneOffset();
+  const sign = timeZoneOffset >= 0 ? '+' : '-';
+  const timeZone = `${pad(timeZoneOffset / 60)}:${pad(timeZoneOffset % 60)}`;
+  return `${toLocaleDate(date)}T${toLocaleTime(date)}${sign}${timeZone}`;
+}
 
 class UUIReplace {
   descr: string;
@@ -27,7 +41,6 @@ class UUIReplace {
 })
 export class MagComponent implements OnInit {
   mag: FhirClient;
-  fhir: FhirClient;
   json: string;
   doc: string;
 
@@ -102,7 +115,6 @@ export class MagComponent implements OnInit {
   ) {
     const oid_mag_ahdis = 'urn:oid:2.16.756.5.30.1.145.20';
     this.mag = data.getMobileAccessGatewayClient();
-    this.fhir = data.getFhirClient();
     this.mag
       .capabilityStatement()
       .then((data: fhir.r4.CapabilityStatement) =>
@@ -931,81 +943,6 @@ export class MagComponent implements OnInit {
       response,
       "entry.resource.where(resourceType='Binary').data"
     );
-  }
-
-  onTransformToFhir() {
-    this.inMhdQueryProgress = true;
-    const formatCode =
-      this.selectedDocumentReference.content &&
-      this.selectedDocumentReference.content.length > 0
-        ? this.selectedDocumentReference.content[0].format?.code
-        : '';
-    if (this.xml != null) {
-      this.fhir
-        .operation({
-          name:
-            'transform?source=' +
-            encodeURIComponent(this.getStructureMap(formatCode, true)),
-          resourceType: 'StructureMap',
-          input: this.xml,
-          options: {
-            headers: {
-              'content-type':
-                'application/fhir+xml;fhirVersion=4.0;charset=UTF-8',
-            },
-          },
-        })
-        .then((response) => {
-          this.setTransformResult(response);
-          this.inMhdQueryProgress = false;
-        })
-        .catch((error) => {
-          this.setJson(error);
-          this.inMhdQueryProgress = true;
-        });
-    }
-  }
-
-  onTransformToCda() {
-    this.inMhdUploadProgress = true;
-    const formatCode = this.getDocumentReferenceContentFormat()
-      ? this.getDocumentReferenceContentFormat().code
-      : null;
-    if (
-      formatCode &&
-      this.getStructureMap(formatCode, false) != null &&
-      this.json != null
-    ) {
-      this.fhir
-        .operation({
-          name:
-            'transform?source=' +
-            encodeURIComponent(this.getStructureMap(formatCode, false)),
-          resourceType: 'StructureMap',
-          input: this.json,
-          options: {
-            headers: {
-              accept: 'text/xml',
-              'content-type':
-                'application/fhir+json;fhirVersion=4.0;charset=UTF-8',
-            },
-          },
-        })
-        .then((response) => {
-          // FIXME fhir client cannot handle xml directly :-)
-          this.inMhdUploadProgress = true;
-        })
-        .catch((error) => {
-          if (error.response.status === 200) {
-            this.uploadContentType = 'text/xml';
-            this.xml = error.response.data;
-            this.setJson(this.xml);
-          } else {
-            this.xml = error.response.data;
-          }
-          this.inMhdUploadProgress = false;
-        });
-    }
   }
 
   downloadPdf(base64String: string, fileName: string) {

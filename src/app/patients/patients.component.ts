@@ -40,7 +40,7 @@ export class PatientsComponent implements OnInit {
   selectedPatient: fhir.r4.Patient;
 
   constructor(private data: FhirConfigService) {
-    this.client = data.getFhirClient();
+    this.client = data.getMobileAccessGatewayClient();
 
     this.searchName = new FormControl();
     this.searchName.valueChanges
