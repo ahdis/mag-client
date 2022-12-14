@@ -1,4 +1,4 @@
-# cleint frontend to mag
+# client frontend to mag
 
 # development setup
 
