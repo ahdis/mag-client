@@ -585,8 +585,7 @@ export class MagComponent implements OnInit {
         body: saml2tcu,
       }
     );
-    const json = await xua.json();
-    return json.access_token;
+    return xua.json();
   }
 
   setBundle(bundle: fhir.r4.Bundle) {
@@ -607,19 +606,20 @@ export class MagComponent implements OnInit {
     this.setBundle(response);
   }
 
-  findDocumentReferences(): Promise<fhir.r4.Bundle> {
+  async findDocumentReferences(): Promise<fhir.r4.Bundle> {
     let query = {
       status: 'current',
       'patient.identifier':
         this.targetIdentifierSystem.value + '|' + this.targetIdentifierValue,
     };
+    let samltoken = await this.getSamlToken();
     return this.mag.search({
       resourceType: 'DocumentReference',
       searchParams: query,
       options: {
         headers: {
           accept: 'application/fhir+json;fhirVersion=4.0;charset=UTF-8',
-          Authorization: 'IHE-SAML ' + this.getSamlToken(),
+          Authorization: 'Bearer ' + samltoken,
         },
       },
     }) as Promise<fhir.r4.Bundle>;
@@ -714,12 +714,14 @@ export class MagComponent implements OnInit {
   // temporary fix because we cannot generate the assertion ourselves yet
   async getSamlToken(): Promise<string> {
     if (this.authenticate.value === 'HCP') {
-      return this.oauthService.getAccessToken();
+      return Promise.resolve(this.oauthService.getAccessToken());
     }
     if (this.authenticate.value === 'Patient') {
-      return this.getSimulatedSamlPmpAssertion(
-        toLocaleDateTime(new Date()),
-        this.targetIdentifier2Value
+      return Promise.resolve(
+        this.getSimulatedSamlPmpAssertion(
+          toLocaleDateTime(new Date()),
+          this.targetIdentifier2Value
+        )
       );
     }
     if (this.authenticate.value === 'TCU') {
