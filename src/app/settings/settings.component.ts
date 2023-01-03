@@ -15,6 +15,8 @@ export class SettingsComponent implements OnInit {
   mobileAccessGateways = [
     'https://test.ahdis.ch/mag-cara/fhir',
     'https://test.ahdis.ch/mag-pmp/fhir',
+    'https://test.ahdis.ch/mag-pmp2/fhir',
+    'https://test.ahdis.ch/eprik-proxy-cara/camel/mag-pmp2/fhir',
     'https://test.ahdis.ch/mag-bfh/fhir',
     'https://test.ahdis.ch/mag-test/fhir',
     'https://test.ahdis.ch/mag-test-emedo/fhir',
