@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { getTokenSourceMapRange } from 'typescript';
 import { IDroppedBlob } from '../upload/upload.component';
 import { FhirResource } from 'fhir-kit-client';
+import { UniqueSelectionDispatcher } from '@angular/cdk/collections';
 
 // adapted from https://stackoverflow.com/a/17415677/16231610
 const pad = (num: number) => String(Math.floor(Math.abs(num))).padStart(2, '0');
@@ -247,6 +248,8 @@ export class MagComponent implements OnInit {
         console.warn(event);
       }
     });
+
+    this.pdf = '';
   }
 
   cache() {
@@ -457,6 +460,7 @@ export class MagComponent implements OnInit {
     if (this.patient.telecom) {
       delete this.patient.telecom;
     }
+    // TODO: If we did not get the patient from PDQm we could justuse EPR SPID and MPI-ID and register thje local id
     this.cache();
     let query = {
       identifier:
@@ -527,9 +531,9 @@ export class MagComponent implements OnInit {
     }
   }
 
-  getAppcDocument(eprspid: string): string {
+  getAppcDocument(eprspid: string, uniqueId: string): string {
     // ${eprspid}
-    let assertion = `<?xml version="1.0" encoding="UTF-8"?><PolicySet PolicySetId="urn:uuid:fc0364a4-9de9-4ef9-971d-fb4d4e535135" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides" xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os" xmlns:ns2="urn:hl7-org:v3"><Description>Test policy set</Description><Target><Resources><Resource><ResourceMatch MatchId="urn:hl7-org:v3:function:II-equal"><AttributeValue DataType="urn:hl7-org:v3#II"><ns2:InstanceIdentifier root="2.16.756.5.30.1.127.3.10.3" extension="${eprspid}"/></AttributeValue><ResourceAttributeDesignator AttributeId="urn:e-health-suisse:2015:epr-spid" DataType="urn:hl7-org:v3#II"/></ResourceMatch></Resource></Resources></Target><PolicySet PolicySetId="urn:uuid:e06ccf2e-b9ce-4ab9-8fdc-2fb907711c1e" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides"><Description>description emergency</Description><Target><Subjects><Subject><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="HCP" codeSystem="2.16.756.5.30.1.127.3.10.6" displayName="Healthcare professional"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:2.0:subject:role" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="EMER" codeSystem="2.16.756.5.30.1.127.3.10.5" displayName="Emergency Access"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" DataType="urn:hl7-org:v3#CV"/></SubjectMatch></Subject></Subjects></Target><PolicySetIdReference>urn:e-health-suisse:2022:policies:pmp:emedication-access</PolicySetIdReference></PolicySet><PolicySet PolicySetId="urn:uuid:523df8bb-9847-4359-a075-0464998e6891" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides"><Description>description hcp</Description><Target><Subjects><Subject><SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">7601002860123</AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" DataType="http://www.w3.org/2001/XMLSchema#string"/></SubjectMatch><SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">urn:gs1:gln</AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id-qualifier" DataType="http://www.w3.org/2001/XMLSchema#string"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="HCP" codeSystem="2.16.756.5.30.1.127.3.10.6" displayName="Healthcare professional"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:2.0:subject:role" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="NORM" codeSystem="2.16.756.5.30.1.127.3.10.5" displayName="Normal Access"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" DataType="urn:hl7-org:v3#CV"/></SubjectMatch></Subject></Subjects><Environments><Environment><EnvironmentMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:date-greater-than-or-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#date">2027-02-03</AttributeValue><EnvironmentAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:environment:current-date" DataType="http://www.w3.org/2001/XMLSchema#date"/></EnvironmentMatch></Environment></Environments></Target><PolicySetIdReference>urn:e-health-suisse:2015:policies:exclusion-list</PolicySetIdReference></PolicySet><PolicySet PolicySetId="urn:uuid:8b612672-0172-47fc-a177-ac7e2760d158" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides"><Description>description group</Description><Target><Subjects><Subject><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="HCP" codeSystem="2.16.756.5.30.1.127.3.10.6" displayName="Healthcare professional"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:2.0:subject:role" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="NORM" codeSystem="2.16.756.5.30.1.127.3.10.5" displayName="Normal Access"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:anyURI-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#anyURI">urn:oid:1.2.3</AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:organization-id" DataType="http://www.w3.org/2001/XMLSchema#anyURI"/></SubjectMatch></Subject></Subjects><Environments><Environment><EnvironmentMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:date-less-than-or-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#date">2032-01-01</AttributeValue><EnvironmentAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:environment:current-date" DataType="http://www.w3.org/2001/XMLSchema#date"/></EnvironmentMatch></Environment></Environments></Target><PolicySetIdReference>urn:e-health-suisse:2022:policies:pmp:emedication-access</PolicySetIdReference></PolicySet></PolicySet>`;
+    let assertion = `<PolicySet PolicySetId="${uniqueId}" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides" xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os" xmlns:ns2="urn:hl7-org:v3"><Description>Test policy set</Description><Target><Resources><Resource><ResourceMatch MatchId="urn:hl7-org:v3:function:II-equal"><AttributeValue DataType="urn:hl7-org:v3#II"><ns2:InstanceIdentifier root="2.16.756.5.30.1.127.3.10.3" extension="${eprspid}"/></AttributeValue><ResourceAttributeDesignator AttributeId="urn:e-health-suisse:2015:epr-spid" DataType="urn:hl7-org:v3#II"/></ResourceMatch></Resource></Resources></Target><PolicySet PolicySetId="urn:uuid:e06ccf2e-b9ce-4ab9-8fdc-2fb907711c1e" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides"><Description>description emergency</Description><Target><Subjects><Subject><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="HCP" codeSystem="2.16.756.5.30.1.127.3.10.6" displayName="Healthcare professional"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:2.0:subject:role" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="EMER" codeSystem="2.16.756.5.30.1.127.3.10.5" displayName="Emergency Access"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" DataType="urn:hl7-org:v3#CV"/></SubjectMatch></Subject></Subjects></Target><PolicySetIdReference>urn:e-health-suisse:2022:policies:pmp:emedication-access</PolicySetIdReference></PolicySet><PolicySet PolicySetId="urn:uuid:523df8bb-9847-4359-a075-0464998e6891" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides"><Description>description hcp</Description><Target><Subjects><Subject><SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">7601002860123</AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" DataType="http://www.w3.org/2001/XMLSchema#string"/></SubjectMatch><SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">urn:gs1:gln</AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id-qualifier" DataType="http://www.w3.org/2001/XMLSchema#string"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="HCP" codeSystem="2.16.756.5.30.1.127.3.10.6" displayName="Healthcare professional"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:2.0:subject:role" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="NORM" codeSystem="2.16.756.5.30.1.127.3.10.5" displayName="Normal Access"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" DataType="urn:hl7-org:v3#CV"/></SubjectMatch></Subject></Subjects><Environments><Environment><EnvironmentMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:date-greater-than-or-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#date">2027-02-03</AttributeValue><EnvironmentAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:environment:current-date" DataType="http://www.w3.org/2001/XMLSchema#date"/></EnvironmentMatch></Environment></Environments></Target><PolicySetIdReference>urn:e-health-suisse:2015:policies:exclusion-list</PolicySetIdReference></PolicySet><PolicySet PolicySetId="urn:uuid:8b612672-0172-47fc-a177-ac7e2760d158" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:deny-overrides"><Description>description group</Description><Target><Subjects><Subject><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="HCP" codeSystem="2.16.756.5.30.1.127.3.10.6" displayName="Healthcare professional"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:2.0:subject:role" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:hl7-org:v3:function:CV-equal"><AttributeValue DataType="urn:hl7-org:v3#CV"><ns2:CodedValue code="NORM" codeSystem="2.16.756.5.30.1.127.3.10.5" displayName="Normal Access"/></AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" DataType="urn:hl7-org:v3#CV"/></SubjectMatch><SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:anyURI-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#anyURI">urn:oid:1.2.3</AttributeValue><SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xspa:1.0:subject:organization-id" DataType="http://www.w3.org/2001/XMLSchema#anyURI"/></SubjectMatch></Subject></Subjects><Environments><Environment><EnvironmentMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:date-less-than-or-equal"><AttributeValue DataType="http://www.w3.org/2001/XMLSchema#date">2032-01-01</AttributeValue><EnvironmentAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:environment:current-date" DataType="http://www.w3.org/2001/XMLSchema#date"/></EnvironmentMatch></Environment></Environments></Target><PolicySetIdReference>urn:e-health-suisse:2022:policies:pmp:emedication-access</PolicySetIdReference></PolicySet></PolicySet>`;
     return assertion;
   }
 
@@ -541,9 +545,13 @@ export class MagComponent implements OnInit {
       return;
     }
     this.uploadContentType = 'text/xml';
-    this.documentType.setValue('XML');
+    this.documentType.setValue('APPC');
     this.documentConfidentiality.setValue('NORM');
-    this.xml = this.getAppcDocument(this.targetIdentifier2Value);
+    this.masterIdentifier.setValue('urn:uuid:' + uuidv4());
+    this.xml = this.getAppcDocument(
+      this.targetIdentifier2Value,
+      this.masterIdentifier.value
+    );
     this.setJson(this.xml);
   }
 
@@ -585,7 +593,8 @@ export class MagComponent implements OnInit {
         body: saml2tcu,
       }
     );
-    return xua.json();
+    const jsonXua = await xua.json();
+    return Promise.resolve(jsonXua.access_token);
   }
 
   setBundle(bundle: fhir.r4.Bundle) {
@@ -627,6 +636,7 @@ export class MagComponent implements OnInit {
 
   async onFindDocumentReferences() {
     this.inMhdQueryProgress = true;
+    this.pdf = '';
     try {
       const bundle = await this.findDocumentReferences();
       this.setDocumentReferenceResult(bundle as fhir.r4.Bundle);
@@ -638,7 +648,7 @@ export class MagComponent implements OnInit {
     }
   }
 
-  findMedicationList(format?: string): Promise<fhir.r4.Bundle> {
+  async findMedicationList(format?: string): Promise<fhir.r4.Bundle> {
     let queryParams =
       'patient.identifier=' +
       this.targetIdentifierSystem.value +
@@ -658,6 +668,8 @@ export class MagComponent implements OnInit {
       queryParams += `&serviceEndTo=${this.serviceEndTo.value}`;
     }
 
+    const saml = await this.getSamlToken();
+
     return this.mag.operation({
       name: '$find-medication-list?status=current&' + queryParams,
       resourceType: 'DocumentReference',
@@ -665,13 +677,14 @@ export class MagComponent implements OnInit {
       options: {
         headers: {
           accept: 'application/fhir+json;fhirVersion=4.0;charset=UTF-8',
-          Authorization: 'IHE-SAML ' + this.getSamlToken(),
+          Authorization: 'Bearer ' + saml,
         },
       },
     });
   }
 
   async onFindMedicationList() {
+    this.pdf = '';
     this.inMhdQueryProgress = true;
     this.cache();
     try {
@@ -691,16 +704,22 @@ export class MagComponent implements OnInit {
   }
 
   async onFindMedicationCard() {
+    this.pdf = '';
     this.inMhdQueryProgress = true;
     this.cache();
     try {
       const bundle = await this.findMedicationList(
-        'urn:oid:2.16.756.5.30.1.127.3.10.10|urn:ch:cda-ch-emed:medication-card:2018'
+        'urn:oid:2.16.756.5.30.1.127.3.10.10|urn:che:epr:ch-emed:medication-card:2022'
       );
       this.setDocumentReferenceResult(bundle);
       if (bundle.entry && bundle.entry.length == 1) {
-        await this.downloadDocumentReferenceAttachment(
+        const medcard: string = (await this.downloadDocumentReferenceAttachment(
           bundle.entry[0].resource as fhir.r4.DocumentReference
+        )) as string;
+        const medcardjson = JSON.parse(medcard);
+        this.pdf = this.fhirPathService.evaluateToString(
+          medcardjson,
+          "entry.resource.where(resourceType='Binary').data"
         );
       }
       this.inMhdQueryProgress = false;
@@ -748,6 +767,10 @@ export class MagComponent implements OnInit {
       'http://test.ahdis.ch/mag-pmp/camel/xdsretrieve',
       'https://test.ahdis.ch/mag-pmp/camel/xdsretrieve'
     );
+    let completeUrl2 = completeUrl.replace(
+      'http://test.ahdis.ch/mag-pmp2/camel/xdsretrieve',
+      'https://test.ahdis.ch/mag-pmp2/camel/xdsretrieve'
+    );
     const contentType =
       entry.content && entry.content.length > 0
         ? entry.content[0].attachment?.contentType
@@ -760,10 +783,10 @@ export class MagComponent implements OnInit {
           : 'undefined';
       const that = this;
       const saml = await this.getSamlToken();
-      const res = await fetch(completeUrl, {
+      const res = await fetch(completeUrl2, {
         cache: 'no-store',
         headers: {
-          Authorization: 'IHE-SAML ' + saml,
+          Authorization: 'Bearer ' + saml,
           Accept: 'application/pdf',
         },
       });
@@ -779,10 +802,7 @@ export class MagComponent implements OnInit {
       });
     } else {
       const saml = await this.getSamlToken();
-      const headers = new HttpHeaders().set(
-        'Authorization',
-        'IHE-SAML ' + saml
-      );
+      const headers = new HttpHeaders().set('Authorization', 'Bearer ' + saml);
       const options = {
         responseType: 'text' as const,
         headers: headers,
@@ -861,7 +881,7 @@ export class MagComponent implements OnInit {
         headers: {
           accept: 'application/fhir+json;fhirVersion=4.0',
           'content-type': 'application/fhir+json;fhirVersion=4.0',
-          Authorization: 'IHE-SAML ' + saml,
+          Authorization: 'IHE-Bearer ' + saml,
         },
       },
     });
@@ -880,71 +900,8 @@ export class MagComponent implements OnInit {
     this.inMhdQueryProgress = false;
   }
 
-  getStructureMap(formatCode: string, cdaToFhir: boolean): string {
-    if (cdaToFhir) {
-      switch (formatCode) {
-        case 'urn:ihe:pharm:pml:2013':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/CdaChEmedMedicationListDocumentToBundle';
-        case 'urn:ch:cda-ch-emed:medication-card:2018':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/CdaChEmedMedicationCardDocumentToBundle';
-        case 'urn:ihe:pharm:mtp:2015':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/CdaChEmedMedicationTreatmentPlanDocumentToBundle';
-        case 'urn:ihe:pharm:pre:2010':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/CdaChEmedMedicationPrescriptionDocumentToBundle';
-        case 'urn:ihe:pharm:padv:2010':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/CdaChEmedPharmaceuticalAdviceDocumentToBundle';
-        case 'urn:ihe:pharm:dis:2010':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/CdaChEmedMedicationDispenseDocumentToBundle';
-      }
-    } else {
-      switch (formatCode) {
-        case 'urn:ch:cda-ch-emed:medication-card:2018':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/BundleToCdaChEmedMedicationCardDocument';
-        case 'urn:ihe:pharm:mtp:2015':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/BundleToCdaChEmedMedicationTreatmentPlanDocument';
-        case 'urn:ihe:pharm:pre:2010':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/BundleToCdaChEmedMedicationPrescriptionDocument';
-        case 'urn:ihe:pharm:padv:2010':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/BundleToCdaChEmedPharmaceuticalAdviceDocument';
-        case 'urn:ihe:pharm:dis:2010':
-          return 'http://fhir.ch/ig/cda-fhir-maps/StructureMap/BundleToCdaChEmedMedicationDispenseDocument';
-      }
-    }
-    return null;
-  }
-
-  canTransformToFhir(): boolean {
-    if (this.selectedDocumentReference) {
-      const formatCode =
-        this.selectedDocumentReference.content &&
-        this.selectedDocumentReference.content.length > 0
-          ? this.selectedDocumentReference.content[0].format?.code
-          : '';
-      return this.getStructureMap(formatCode, true) != null;
-    }
-    return false;
-  }
-
-  canTransformToCda(): boolean {
-    if (this.getDocumentReferenceContentFormat() != null) {
-      return (
-        this.getStructureMap(
-          this.getDocumentReferenceContentFormat().code,
-          true
-        ) != null
-      );
-    }
-    return false;
-  }
-
-  setTransformResult(response: any) {
-    this.uploadBase64 = '';
-    this.setJson(JSON.stringify(response, null, 2));
-    // wrong fhirpath, should be ofType(Binary) and would be nicer to resolve from the section link
-    this.pdf = this.fhirPathService.evaluateToString(
-      response,
-      "entry.resource.where(resourceType='Binary').data"
-    );
+  canTransformToPdf(): boolean {
+    return this.pdf != '';
   }
 
   downloadPdf(base64String: string, fileName: string) {
@@ -974,15 +931,6 @@ export class MagComponent implements OnInit {
   getDocumentReferenceType(): fhir.r4.CodeableConcept {
     switch (this.documentType.value) {
       case 'APPC':
-        return {
-          coding: [
-            {
-              system: 'http://snomed.info/sct',
-              code: '721914005',
-              display: 'Patient consent document',
-            },
-          ],
-        };
       case 'MTP':
       case 'PADV':
       case 'DIS':
@@ -1047,14 +995,15 @@ export class MagComponent implements OnInit {
   }
 
   getDocumentReferenceCategory(): fhir.r4.CodeableConcept {
+    // classCode
     switch (this.documentType.value) {
       case 'APPC':
         return {
           coding: [
             {
               system: 'http://snomed.info/sct',
-              code: '405624007',
-              display: 'Administrative documentation',
+              code: '371537001',
+              display: 'Consent report (record artifact)',
             },
           ],
         };
@@ -1095,23 +1044,23 @@ export class MagComponent implements OnInit {
         };
       case 'MTP':
         return {
-          system: 'urn:oid:1.3.6.1.4.1.19376.1.2.3',
-          code: 'urn:ihe:pharm:mtp:2015',
+          system: 'urn:oid:2.16.756.5.30.1.127.3.10.10',
+          code: 'urn:che:epr:ch-emed:mtp:2022',
         };
       case 'DIS':
         return {
-          system: 'urn:oid:1.3.6.1.4.1.19376.1.2.3',
-          code: 'urn:ihe:pharm:dis:2010',
+          system: 'urn:oid:2.16.756.5.30.1.127.3.10.10',
+          code: 'urn:che:epr:ch-emed:dis:2022',
         };
       case 'PRE':
         return {
-          system: 'urn:oid:1.3.6.1.4.1.19376.1.2.3',
-          code: 'urn:ihe:pharm:pre:2010',
+          system: 'urn:oid:2.16.756.5.30.1.127.3.10.10',
+          code: 'urn:che:epr:ch-emed:pre:2022',
         };
       case 'PADV':
         return {
-          system: 'urn:oid:1.3.6.1.4.1.19376.1.2.3',
-          code: 'urn:ihe:pharm:padv:2010',
+          system: 'urn:oid:2.16.756.5.30.1.127.3.10.10',
+          code: 'urn:che:epr:ch-emed:padv:2022',
         };
       case 'PDF':
         return {
@@ -1165,7 +1114,7 @@ export class MagComponent implements OnInit {
         blob.contentType === 'application/json' ||
         blob.name.endsWith('.json')
       ) {
-        this.uploadContentType = 'application/json';
+        this.uploadContentType = 'application/fhir+json';
         this.autoDetectFormat(<string>reader.result);
       }
       if (blob.contentType === 'text/xml' || blob.name.endsWith('.xml')) {

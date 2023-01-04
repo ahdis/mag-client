@@ -22,6 +22,7 @@ export class SettingsComponent implements OnInit {
     'https://test.ahdis.ch/mag-test-emedo/fhir',
     'http://localhost:8080/matchbox/fhir',
     'http://localhost:9090/mag-pmp/fhir',
+    'http://localhost:9090/mag-pmp2/fhir',
     'http://localhost:9090/mag-cara/fhir',
   ];
 

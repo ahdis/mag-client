@@ -259,6 +259,12 @@
         Medication Card
       </button>
     </mat-card-actions>
+
+    <ng-container *ngIf="canTransformToPdf()">
+      <mat-card-actions>
+        <button mat-raised-button type="submit" (click)="onPdf()">Pdf</button>
+      </mat-card-actions>
+    </ng-container>
   </mat-card-content>
 </mat-card>
 
