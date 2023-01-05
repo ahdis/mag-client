@@ -1126,6 +1126,11 @@ export class MagComponent implements OnInit {
     };
   }
 
+  getResource(bundle: fhir.r4.Bundle, reference: string): fhir.r4.Resource {
+    return bundle.entry.filter((be) => be.fullUrl.endsWith(reference)).pop()
+      ?.resource;
+  }
+
   autoDetectFormat(jsonString: string) {
     this.documentType.setValue('JSON');
     const json = JSON.parse(jsonString);
@@ -1280,7 +1285,7 @@ export class MagComponent implements OnInit {
 
   async createMhdTransaction() {
     this.inMhdUploadProgress = true;
-    let bundle: fhir.r4.Bundle = {
+    let bundleTransaction: fhir.r4.Bundle = {
       resourceType: 'Bundle',
       meta: {
         profile: [
@@ -1383,6 +1388,7 @@ export class MagComponent implements OnInit {
             subject: {
               reference: '#7',
             },
+            author: [],
             date: '$8',
             description: 'Upload',
             securityLabel: [],
@@ -1431,10 +1437,11 @@ export class MagComponent implements OnInit {
     // Binary
     let fullUrlBinary = 'urn:uuid:' + uuidv4();
 
-    bundle.entry[0].fullUrl = fullUrlBinary; // $1
+    bundleTransaction.entry[0].fullUrl = fullUrlBinary; // $1
     //    bundle.entry[0].resource.data = Base64.encode(this.upload); // $2
 
-    const binary: fhir.r4.Binary = bundle.entry[0].resource as fhir.r4.Binary;
+    const binary: fhir.r4.Binary = bundleTransaction.entry[0]
+      .resource as fhir.r4.Binary;
     binary.contentType = this.uploadContentType; // $1.2
 
     if (this.uploadBase64?.length > 0) {
@@ -1445,8 +1452,9 @@ export class MagComponent implements OnInit {
 
     // List
     let uuid3 = uuidv4();
-    bundle.entry[1].fullUrl = 'urn:uid:' + uuid3; // $3
-    const list: fhir.r4.List = bundle.entry[1].resource as fhir.r4.List;
+    bundleTransaction.entry[1].fullUrl = 'urn:uid:' + uuid3; // $3
+    const list: fhir.r4.List = bundleTransaction.entry[1]
+      .resource as fhir.r4.List;
 
     // $4 http://profiles.ihe.net/ITI/MHD/StructureDefinition/ihe-sourceId
     list.extension.push({
@@ -1494,8 +1502,8 @@ export class MagComponent implements OnInit {
     list.entry[0].item.reference = fullUrlDocumentReference; // $9 urn:uuid:537f1c0f-6adc-48b2-b7f9-141f7e639972
 
     // DocumentReference
-    bundle.entry[2].fullUrl = fullUrlDocumentReference; // $9
-    const docref: fhir.r4.DocumentReference = bundle.entry[2]
+    bundleTransaction.entry[2].fullUrl = fullUrlDocumentReference; // $9
+    const docref: fhir.r4.DocumentReference = bundleTransaction.entry[2]
       .resource as fhir.r4.DocumentReference;
 
     docref.extension.push({
@@ -1524,6 +1532,54 @@ export class MagComponent implements OnInit {
       docrefpat.address = this.patient.address;
     }
 
+    if (
+      this.uploadBundle != null &&
+      ['PADV', 'DIS', 'MTP', 'PRE', 'PMLC'].includes(this.documentType.value)
+    ) {
+      const composition = this.uploadBundle.entry[0]
+        .resource as fhir.r4.Composition;
+      if (composition?.author) {
+        if (composition.author[0].reference) {
+          const practRole = this.getResource(
+            this.uploadBundle,
+            composition.author[0].reference
+          );
+          if (practRole && practRole.resourceType == 'PractitionerRole') {
+            let practitionerRole = { ...practRole } as fhir.r4.PractitionerRole;
+            delete practitionerRole.text;
+            practitionerRole.id = 'practrole';
+            const organization = this.getResource(
+              this.uploadBundle,
+              practitionerRole.organization?.reference
+            );
+            const practitioner = this.getResource(
+              this.uploadBundle,
+              practitionerRole.practitioner?.reference
+            );
+            if (organization) {
+              let org = { ...organization } as fhir.r4.Organization;
+              org.id = 'org';
+              delete org.text;
+              practitionerRole.organization.reference = '#org';
+              docref.contained.push(org);
+            }
+            if (practitioner) {
+              let pract = { ...practitioner } as fhir.r4.Practitioner;
+              pract.id = 'pract';
+              delete pract.text;
+              practitionerRole.practitioner.reference = '#pract';
+              docref.contained.push(pract);
+            }
+            docref.contained.push(practitionerRole);
+            docref.author.push({ reference: '#practrole' });
+          }
+        }
+      }
+    }
+    if (docref.author.length == 0) {
+      delete docref.author;
+    }
+
     //    let docRefUniqueId =
     //      this.masterIdentifier.value.toLocaleLowerCase();
     let docRefUniqueId = this.masterIdentifier.value.toLocaleLowerCase();
@@ -1540,8 +1596,8 @@ export class MagComponent implements OnInit {
     docref.content[0].attachment.contentType = this.uploadContentType; // $1.2
     docref.content[0].attachment.language = this.languageCode.value; // $1.3
 
-    let documentReference: fhir.r4.DocumentReference = bundle.entry[2]
-      .resource as fhir.r4.DocumentReference;
+    let documentReference: fhir.r4.DocumentReference = bundleTransaction
+      .entry[2].resource as fhir.r4.DocumentReference;
 
     documentReference.date = this.creationTime.value;
     documentReference.type = this.getDocumentReferenceType();
@@ -1555,11 +1611,11 @@ export class MagComponent implements OnInit {
 
     this.mag
       .transaction({
-        body: bundle as FhirResource & { type: 'transaction' },
+        body: bundleTransaction as FhirResource & { type: 'transaction' },
         options: {
           headers: {
             accept: 'application/fhir+json;fhirVersion=4.0;charset=UTF-8',
-            Authorization: 'IHE-SAML ' + saml,
+            Authorization: 'Bearer ' + saml,
           },
         },
       })
