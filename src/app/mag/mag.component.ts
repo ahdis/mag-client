@@ -105,6 +105,7 @@ export class MagComponent implements OnInit {
   inMhdUploadProgress = false;
   inPixmProgress = false;
   selectedDocumentReference: fhir.r4.DocumentReference;
+  replaceDocumentReference: fhir.r4.DocumentReference;
 
   constructor(
     private data: FhirConfigService,
@@ -250,6 +251,7 @@ export class MagComponent implements OnInit {
     });
 
     this.pdf = '';
+    this.replaceDocumentReference = null;
   }
 
   cache() {
@@ -635,6 +637,7 @@ export class MagComponent implements OnInit {
   }
 
   async onFindDocumentReferences() {
+    this.replaceDocumentReference = null;
     this.inMhdQueryProgress = true;
     this.pdf = '';
     try {
@@ -821,7 +824,12 @@ export class MagComponent implements OnInit {
     }
   }
 
+  async onReplace(entryOrig: fhir.r4.DocumentReference) {
+    this.replaceDocumentReference = entryOrig;
+  }
+
   async onRemove(entryOrig: fhir.r4.DocumentReference) {
+    this.replaceDocumentReference = null;
     let entry = { ...entryOrig };
     this.inMhdQueryProgress = true;
 
@@ -881,7 +889,7 @@ export class MagComponent implements OnInit {
         headers: {
           accept: 'application/fhir+json;fhirVersion=4.0',
           'content-type': 'application/fhir+json;fhirVersion=4.0',
-          Authorization: 'IHE-Bearer ' + saml,
+          Authorization: 'Bearer ' + saml,
         },
       },
     });
@@ -895,6 +903,7 @@ export class MagComponent implements OnInit {
   async onDownloadDocumentReferenceAttachment(
     entry: fhir.r4.DocumentReference
   ) {
+    this.replaceDocumentReference = null;
     this.inMhdQueryProgress = true;
     await this.downloadDocumentReferenceAttachment(entry);
     this.inMhdQueryProgress = false;
@@ -1388,6 +1397,7 @@ export class MagComponent implements OnInit {
             subject: {
               reference: '#7',
             },
+            relatesTo: [],
             author: [],
             date: '$8',
             description: 'Upload',
@@ -1515,6 +1525,19 @@ export class MagComponent implements OnInit {
         display: 'Healthcare professional',
       },
     });
+
+    // if we replace a previous document we need to add the relationship
+    // need to update to fromat https://profiles.ihe.net/ITI/MHD/Bundle-ex-comprehensiveProvideDocumentBundleReplace.json.html
+    if (this.replaceDocumentReference != null) {
+      docref.relatesTo.push({
+        code: 'replaces',
+        target: {
+          reference: this.replaceDocumentReference.identifier[0].value,
+        },
+      });
+    } else {
+      delete docref.relatesTo;
+    }
 
     const docrefpat: fhir.r4.Patient = docref.contained[0] as fhir.r4.Patient;
 

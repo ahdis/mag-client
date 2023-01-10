@@ -183,13 +183,18 @@
       <ng-container matColumnDef="action">
         <mat-header-cell *matHeaderCellDef class="res">Actions</mat-header-cell>
         <mat-cell *matCellDef="let entry" class="res">
+          <button mat-icon-button (click)="onRemove(entry)" type="submit">
+            <mat-icon>remove</mat-icon>
+          </button>
+          <button mat-icon-button (click)="onReplace(entry)" type="submit">
+            <mat-icon>reply</mat-icon>
+          </button>
           <button
             mat-icon-button
-            aria-label="Remove"
-            (click)="onRemove(entry)"
-            type="button"
+            (click)="onDownloadDocumentReferenceAttachment(entry)"
+            type="submit"
           >
-            <mat-icon>remove</mat-icon>
+            <mat-icon>download</mat-icon>
           </button>
         </mat-cell>
       </ng-container>
@@ -208,7 +213,6 @@
           let row;
           columns: ['name', 'title', 'contentType', 'formatCode', 'action']
         "
-        (click)="onDownloadDocumentReferenceAttachment(row)"
       >
       </mat-row>
     </mat-table>
@@ -328,44 +332,41 @@
       </mat-form-field>
     </div>
     <div>
-      <div>
-        <mat-form-field class="column50">
-          <mat-label>ihe-sourceId</mat-label>
-          <input matInput [formControl]="iheSourceId" /> </mat-form-field
-        >&nbsp;
-        <a
-          href="https://profiles.ihe.net/ITI/MHD/4.0.2/StructureDefinition-ihe-sourceId.html"
-          >ig</a
-        >
-      </div>
-      <div *ngFor="let entry of replaceUuids">
-        {{ entry.descr }}: {{ entry.existingUuid }} -> {{ entry.newUuid }}
-      </div>
-      <div *ngIf="errMsgAssignPatient">{{ errMsgAssignPatient }}</div>
-      <ng-container *ngIf="inMhdUploadProgress">
-        <mat-progress-spinner mode="indeterminate"> </mat-progress-spinner>
-      </ng-container>
-      <div>
-        <button
-          mat-raised-button
-          type="submit"
-          (click)="assignMobileAccessPatient()"
-        >
-          Assign Mobile Access Patient</button
-        >&nbsp;
+      <mat-form-field class="column50">
+        <mat-label>ihe-sourceId</mat-label>
+        <input matInput [formControl]="iheSourceId" /> </mat-form-field
+      >&nbsp;
+      <a
+        href="https://profiles.ihe.net/ITI/MHD/4.0.2/StructureDefinition-ihe-sourceId.html"
+        >ig</a
+      >
+    </div>
 
-        <button
-          mat-raised-button
-          type="submit"
-          (click)="createMhdTransaction()"
-        >
-          Provide and Register
-        </button>
+    <div *ngIf="replaceDocumentReference">
+      Replace Document with {{ replaceDocumentReference.identifier[0].value }}
+    </div>
 
-        <button type="submit" (click)="createAppc()">
-          create APPC for PMP
-        </button>
-      </div>
+    <div *ngFor="let entry of replaceUuids">
+      {{ entry.descr }}: {{ entry.existingUuid }} -> {{ entry.newUuid }}
+    </div>
+    <div *ngIf="errMsgAssignPatient">{{ errMsgAssignPatient }}</div>
+    <ng-container *ngIf="inMhdUploadProgress">
+      <mat-progress-spinner mode="indeterminate"> </mat-progress-spinner>
+    </ng-container>
+    <div>
+      <button
+        mat-raised-button
+        type="submit"
+        (click)="assignMobileAccessPatient()"
+      >
+        Assign Mobile Access Patient</button
+      >&nbsp;
+
+      <button mat-raised-button type="submit" (click)="createMhdTransaction()">
+        Provide and Register
+      </button>
+
+      <button type="submit" (click)="createAppc()">create APPC for PMP</button>
     </div>
   </mat-card-content>
 </mat-card>
