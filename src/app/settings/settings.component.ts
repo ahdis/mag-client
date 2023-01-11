@@ -14,14 +14,13 @@ import { Router } from '@angular/router';
 export class SettingsComponent implements OnInit {
   mobileAccessGateways = [
     'https://test.ahdis.ch/mag-cara/fhir',
-    'https://test.ahdis.ch/mag-pmp/fhir',
+    'https://test.ahdis.ch/eprik-proxy-cara/camel/mag-cara/fhir',
     'https://test.ahdis.ch/mag-pmp2/fhir',
-    'https://test.ahdis.ch/eprik-proxy-cara/camel/mag-pmp2/fhir',
+    'https://test.ahdis.ch/eprik-proxy-cara/camel/mag-pmp/fhir',
     'https://test.ahdis.ch/mag-bfh/fhir',
     'https://test.ahdis.ch/mag-test/fhir',
     'https://test.ahdis.ch/mag-test-emedo/fhir',
     'http://localhost:8080/matchbox/fhir',
-    'http://localhost:9090/mag-pmp/fhir',
     'http://localhost:9090/mag-pmp2/fhir',
     'http://localhost:9090/mag-cara/fhir',
   ];
