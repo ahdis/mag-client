@@ -881,23 +881,26 @@ export class MagComponent implements OnInit {
 
     const saml = await this.getSamlToken();
 
-    let response = await this.mag.update({
-      resourceType: 'DocumentReference',
-      id: entry.id,
-      body: entry,
-      options: {
-        headers: {
-          accept: 'application/fhir+json;fhirVersion=4.0',
-          'content-type': 'application/fhir+json;fhirVersion=4.0',
-          Authorization: 'Bearer ' + saml,
+    try {
+      let response = await this.mag.update({
+        resourceType: 'DocumentReference',
+        id: entry.id,
+        body: entry,
+        options: {
+          headers: {
+            accept: 'application/fhir+json;fhirVersion=4.0',
+            'content-type': 'application/fhir+json;fhirVersion=4.0',
+            Authorization: 'Bearer ' + saml,
+          },
         },
-      },
-    });
-    this.setJson(JSON.stringify(response, null, 2));
-
-    this.inMhdQueryProgress = false;
-
-    this.onFindDocumentReferences();
+      });
+      this.setJson(JSON.stringify(response, null, 2));
+      this.inMhdQueryProgress = false;
+      this.onFindDocumentReferences();
+    } catch (error) {
+      this.setJson(JSON.stringify(error.response.data, null, 2));
+      this.inMhdQueryProgress = false;
+    }
   }
 
   async onDownloadDocumentReferenceAttachment(
