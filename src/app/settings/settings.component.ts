@@ -23,6 +23,7 @@ export class SettingsComponent implements OnInit {
     'http://localhost:8080/matchbox/fhir',
     'http://localhost:9090/mag-pmp2/fhir',
     'http://localhost:9090/mag-cara/fhir',
+    'http://localhost:18002/eprik-proxy-cara/camel/mag-pmp/fhir',
   ];
 
   subscriptionFhir: Subscription;

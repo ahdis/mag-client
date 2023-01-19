@@ -395,13 +395,15 @@ export class MagComponent implements OnInit {
     this.cache();
     let queryParams =
       'sourceIdentifier=' +
-      this.sourceIdentifierSystem.value +
-      '|' +
-      this.sourceIdentifierValue.value +
+      encodeURIComponent(
+        this.sourceIdentifierSystem.value +
+          '|' +
+          this.sourceIdentifierValue.value
+      ) +
       '&targetSystem=' +
-      this.targetIdentifierSystem.value +
+      encodeURIComponent(this.targetIdentifierSystem.value) +
       '&targetSystem=' +
-      this.targetIdentifier2System.value;
+      encodeURIComponent(this.targetIdentifier2System.value);
     this.mag
       .operation({
         name: '$ihe-pix?' + queryParams,
@@ -465,10 +467,11 @@ export class MagComponent implements OnInit {
     // TODO: If we did not get the patient from PDQm we could justuse EPR SPID and MPI-ID and register thje local id
     this.cache();
     let query = {
-      identifier:
+      identifier: encodeURIComponent(
         this.sourceAddIdentifierSystem.value +
-        '|' +
-        this.sourceAddIdentifierValue.value,
+          '|' +
+          this.sourceAddIdentifierValue.value
+      ),
     };
     //    if (this.patient.managingOrganization === undefined) {
     //      this.patient.managingOrganization = {
@@ -620,8 +623,9 @@ export class MagComponent implements OnInit {
   async findDocumentReferences(): Promise<fhir.r4.Bundle> {
     let query = {
       status: 'current',
-      'patient.identifier':
-        this.targetIdentifierSystem.value + '|' + this.targetIdentifierValue,
+      'patient.identifier': encodeURIComponent(
+        this.targetIdentifierSystem.value + '|' + this.targetIdentifierValue
+      ),
     };
     let samltoken = await this.getSamlToken();
     return this.mag.search({
@@ -654,21 +658,29 @@ export class MagComponent implements OnInit {
   async findMedicationList(format?: string): Promise<fhir.r4.Bundle> {
     let queryParams =
       'patient.identifier=' +
-      this.targetIdentifierSystem.value +
-      '|' +
-      this.targetIdentifierValue +
+      encodeURIComponent(
+        this.targetIdentifierSystem.value + '|' + this.targetIdentifierValue
+      ) +
       (format ? '&format=' + encodeURIComponent(format) : '');
     if (this.serviceStartFrom.value?.length > 0) {
-      queryParams += `&serviceStartFrom=${this.serviceStartFrom.value}`;
+      queryParams += `&serviceStartFrom=${encodeURIComponent(
+        this.serviceStartFrom.value
+      )}`;
     }
     if (this.serviceStartTo.value?.length > 0) {
-      queryParams += `&serviceStartTo=${this.serviceStartTo.value}`;
+      queryParams += `&serviceStartTo=${encodeURIComponent(
+        this.serviceStartTo.value
+      )}`;
     }
     if (this.serviceEndFrom.value?.length > 0) {
-      queryParams += `&serviceEndFrom=${this.serviceEndFrom.value}`;
+      queryParams += `&serviceEndFrom=${encodeURIComponent(
+        this.serviceEndFrom.value
+      )}`;
     }
     if (this.serviceEndTo.value?.length > 0) {
-      queryParams += `&serviceEndTo=${this.serviceEndTo.value}`;
+      queryParams += `&serviceEndTo=${encodeURIComponent(
+        this.serviceEndTo.value
+      )}`;
     }
 
     const saml = await this.getSamlToken();
