@@ -466,12 +466,22 @@ export class MagComponent implements OnInit {
     }
     // TODO: If we did not get the patient from PDQm we could justuse EPR SPID and MPI-ID and register thje local id
     this.cache();
+    // query param gets double encoded on update if we use encodeURIComponent here to
+    // http://localhost:9090/mag-pmp2/fhir/Patient?identifier=urn%253Aoid%253A2.16.756.5.30.1.196.3.2.1%257CHCI001
+    // instead of
+    // http://localhost:9090/mag-pmp2/fhir/Patient?identifier=urn%3Aoid%3A2.16.756.5.30.1.196.3.2.1%7CHCI001
+    // let query = {
+    //   identifier: encodeURIComponent(
+    //     this.sourceAddIdentifierSystem.value +
+    //       '|' +
+    //       this.sourceAddIdentifierValue.value
+    //   ),
+    // };
     let query = {
-      identifier: encodeURIComponent(
+      identifier:
         this.sourceAddIdentifierSystem.value +
-          '|' +
-          this.sourceAddIdentifierValue.value
-      ),
+        '|' +
+        this.sourceAddIdentifierValue.value,
     };
     //    if (this.patient.managingOrganization === undefined) {
     //      this.patient.managingOrganization = {
